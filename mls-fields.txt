@@ -1,0 +1,12 @@
+CountyOrParish
+Latitude
+Longitude
+MlsStatus
+ListPrice
+LotSizeAcres
+Sewer
+RoadSurfaceType
+ListingId
+ListAgentFullName
+ListAgentEmail
+UnparsedAddress

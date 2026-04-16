@@ -1,0 +1,10 @@
+{
+  "center_latitude": 35.2271,
+  "center_longitude": -80.8431,
+  "radius_miles": 40,
+  "max_price": 120000,
+  "minimum_acres_with_sewer": 0.1,
+  "minimum_acres_without_sewer": 0.7,
+  "required_status": "Active",
+  "excluded_road_surface": "Dirt"
+}

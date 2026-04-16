@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify
 import requests
 import os
+import json
 from datetime import datetime
+from filter import qualifies
 
 app = Flask(__name__)
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
+
+with open("criteria.json", "r") as f:
+    criteria = json.load(f)
 
 
 @app.route("/")
@@ -32,6 +37,30 @@ def test_lead():
 
     response = requests.post(SHEET_WEBHOOK_URL, json=payload)
     return f"Sheet response: {response.text}"
+
+
+@app.route("/test-filter")
+def test_filter():
+    listing = {
+        "CountyOrParish": "Cabarrus",
+        "Latitude": 35.4100,
+        "Longitude": -80.6000,
+        "MlsStatus": "Active",
+        "ListPrice": 100000,
+        "LotSizeAcres": 1.2,
+        "Sewer": "Septic Needed",
+        "RoadSurfaceType": "Paved",
+        "ListingId": "FILTER001",
+        "ListAgentFullName": "Test Agent",
+        "ListAgentEmail": "evan@prespro.com",
+        "UnparsedAddress": "456 Example Lane"
+    }
+
+    return jsonify({
+        "qualifies": qualifies(listing, criteria),
+        "listing": listing,
+        "criteria": criteria
+    })
 
 
 @app.route("/add-lead", methods=["POST"])
