@@ -1,10 +1,11 @@
 from flask import Flask
 import requests
+import os
 from datetime import datetime
 
 app = Flask(__name__)
 
-SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbw0HavakxgquBBZraUW-C5exO0TfItK7ppQy92m1Uhok4GjYxKdrLWKWzE2gnN4tclw9w/exec"
+SHEET_WEBHOOK_URL = os.environ["https://script.google.com/macros/s/AKfycbw0HavakxgquBBZraUW-C5exO0TfItK7ppQy92m1Uhok4GjYxKdrLWKWzE2gnN4tclw9w/exec"]
 
 @app.route("/")
 def home():
