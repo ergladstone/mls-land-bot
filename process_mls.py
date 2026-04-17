@@ -29,7 +29,7 @@ def process_sample_mls():
                 "price": listing.get("ListPrice", ""),
                 "agentName": listing.get("ListAgentFullName", ""),
                 "agentEmail": listing.get("ListAgentEmail", ""),
-                "mlsLink": "",
+                "mlsLink": f"https://matrix.canopymls.com/matrix/shared/{listing.get('ListingId', '')}",
                 "gisLink": ""
             }
 
