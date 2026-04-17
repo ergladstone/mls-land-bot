@@ -1,0 +1,32 @@
+{
+  "value": [
+    {
+      "CountyOrParish": "Cabarrus",
+      "Latitude": 35.41,
+      "Longitude": -80.60,
+      "MlsStatus": "Active",
+      "ListPrice": 100000,
+      "LotSizeAcres": 1.2,
+      "Sewer": "Septic Needed",
+      "RoadSurfaceType": "Paved",
+      "ListingId": "MLS001",
+      "ListAgentFullName": "Test Agent",
+      "ListAgentEmail": "evan@prespro.com",
+      "UnparsedAddress": "456 Example Lane"
+    },
+    {
+      "CountyOrParish": "Mecklenburg",
+      "Latitude": 35.20,
+      "Longitude": -80.85,
+      "MlsStatus": "Active",
+      "ListPrice": 150000,
+      "LotSizeAcres": 0.5,
+      "Sewer": "Public Sewer",
+      "RoadSurfaceType": "Paved",
+      "ListingId": "MLS002",
+      "ListAgentFullName": "Another Agent",
+      "ListAgentEmail": "evan@prespro.com",
+      "UnparsedAddress": "789 Sample Street"
+    }
+  ]
+}
