@@ -4,7 +4,7 @@ import os
 import json
 from datetime import datetime
 from filter import qualifies
-from process_mls import process_sample_mls
+import process_mls
 
 app = Flask(__name__)
 
