@@ -16,7 +16,7 @@ def fetch_mls_listings(limit=100):
         "$select": "ListingKey,ListingId",
         "$filter": (
             f"OriginatingSystemName eq '{originating_system_name}' "
-            f"and MlsStatus eq 'Active'"
+            f"and StandardStatus eq 'Active'"
         ),
         "$orderby": "ModificationTimestamp desc",
         "$top": str(limit),
