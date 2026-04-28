@@ -13,14 +13,9 @@ def fetch_mls_listings(limit=100):
     }
 
     params = {
-        "$select": "ListingKey,ListingId",
-        "$filter": (
-            f"OriginatingSystemName eq '{originating_system_name}' "
-            f"and StandardStatus eq 'Active'"
-        ),
-        "$orderby": "ModificationTimestamp desc",
-        "$top": str(limit),
-    }
+    	"$select": "ListingKey,ListingId,OriginatingSystemName",
+    	"$top": "5"
+	}
 
     response = requests.get(
         MLS_GRID_BASE_URL,
