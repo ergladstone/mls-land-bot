@@ -14,27 +14,7 @@ def fetch_mls_listings(limit=100):
     }
 
     params = {
-        "$select": ",".join([
-            "ListingKey",
-            "ListingId",
-            "MlsStatus",
-            "StandardStatus",
-            "ListPrice",
-            "PropertyType",
-            "LotSizeAcres",
-            "RoadSurfaceType",
-            "Sewer",
-            "Latitude",
-            "Longitude",
-            "UnparsedAddress",
-            "City",
-            "CountyOrParish",
-            "StateOrProvince",
-            "PostalCode",
-            "ModificationTimestamp",
-            "ListAgentFullName",
-            "ListAgentEmail",
-        ]),
+        "$select": "ListingKey,ListingId",
         "$filter": (
             f"OriginatingSystemName eq '{originating_system_name}' "
             f"and MlsStatus eq 'Active'"
