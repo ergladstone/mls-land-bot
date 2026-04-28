@@ -37,7 +37,6 @@ def fetch_mls_listings(limit=100):
         ]),
         "$filter": (
             f"OriginatingSystemName eq '{originating_system_name}' "
-            f"and PropertyType eq '{property_type}' "
             f"and MlsStatus eq 'Active'"
         ),
         "$orderby": "ModificationTimestamp desc",
