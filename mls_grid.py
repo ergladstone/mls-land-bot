@@ -6,7 +6,6 @@ MLS_GRID_BASE_URL = "https://api.mlsgrid.com/v2/Property"
 def fetch_mls_listings(limit=100):
     token = os.environ.get("MLS_GRID_TOKEN")
     originating_system_name = os.environ.get("MLS_ORIGINATING_SYSTEM_NAME")
-    property_type = os.environ.get("MLS_LIST_PROPERTY_TYPE", "Land")
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -30,7 +29,12 @@ def fetch_mls_listings(limit=100):
         timeout=30,
     )
 
-    response.raise_for_status()
+    if not response.ok:
+        print("MLS Grid error status:", response.status_code)
+        print("MLS Grid error response:", response.text)
+        print("MLS Grid request URL:", response.url)
+        response.raise_for_status()
+
     data = response.json()
 
     return data.get("value", [])
