@@ -63,10 +63,9 @@ def test_filter():
         "criteria": criteria
     })
 
-@app.route("/process-sample")
-def process_sample():
-    result = process_sample_mls()
-    return jsonify(result)
+@app.route("/process-mls")
+def process_mls_route():
+    return jsonify({"status": "MLS processing is handled by process_mls.py"})
 
 @app.route("/add-lead", methods=["POST"])
 def add_lead():
