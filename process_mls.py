@@ -13,13 +13,22 @@ results = []
 for listing in listings:
     street_number = listing.get("StreetNumber", "")
     street_name = listing.get("StreetName", "")
+    street_suffix = listing.get("StreetSuffix", "")
     city = listing.get("City", "")
     state = listing.get("StateOrProvince", "")
     zip_code = listing.get("PostalCode", "")
 
-    street_address = f"{street_number} {street_name}".strip()
-    city_state_zip = " ".join(part for part in [city, state, zip_code] if part).strip()
-    full_address = ", ".join(part for part in [street_address, city_state_zip] if part)
+    street_address = " ".join(
+        part for part in [street_number, street_name, street_suffix] if part
+    ).strip()
+
+    city_state_zip = " ".join(
+        part for part in [city, state, zip_code] if part
+    ).strip()
+
+    full_address = ", ".join(
+        part for part in [street_address, city_state_zip] if part
+    )
 
     acres = listing.get("LotSizeAcres")
 

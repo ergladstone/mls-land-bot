@@ -18,6 +18,7 @@ def fetch_mls_listings(limit=5):
             "ParcelNumber",
             "StreetNumber",
             "StreetName",
+            "StreetSuffix",
             "City",
             "CountyOrParish",
             "StateOrProvince",
