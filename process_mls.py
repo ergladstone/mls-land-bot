@@ -12,6 +12,8 @@ listings = fetch_mls_listings(limit=5)
 results = []
 
 for listing in listings:
+    print("FULL MLS LISTING:", listing)
+
     payload = {
         "status": "Qualified",
         "dateFound": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
