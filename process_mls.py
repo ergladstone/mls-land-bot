@@ -1,30 +1,30 @@
-import json
-import requests
 import os
+import requests
 from datetime import datetime
 from mls_grid import fetch_mls_listings
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 
-# Fetch ONLY 5 listings
+# Fetch ONLY 5 active MLS listings for now
 listings = fetch_mls_listings(limit=5)
 
 results = []
 
 for listing in listings:
-    print("FULL MLS LISTING:", listing)
+    street_number = listing.get("StreetNumber", "")
+    street_name = listing.get("StreetName", "")
+    address = f"{street_number} {street_name}".strip()
 
     payload = {
         "status": "Qualified",
         "dateFound": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mlsId": listing.get("ListingId", ""),
-        "parcelId": "",
+        "parcelId": listing.get("ParcelNumber", ""),
+        "address": address,
         "county": listing.get("CountyOrParish", ""),
-        "address": listing.get("UnparsedAddress", ""),
+        "municipality": listing.get("City", ""),
         "acres": listing.get("LotSizeAcres", ""),
         "price": listing.get("ListPrice", ""),
-        "agentName": listing.get("ListAgentFullName", ""),
-        "agentEmail": listing.get("ListAgentEmail", ""),
         "mlsLink": f"https://matrix.canopymls.com/matrix/shared/{listing.get('ListingId', '')}",
         "gisLink": ""
     }
@@ -33,7 +33,7 @@ for listing in listings:
 
     results.append({
         "listingId": listing.get("ListingId"),
-        "qualified": True,
+        "sentToSheet": True,
         "sheetResponse": response.text
     })
 
