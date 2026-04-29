@@ -13,8 +13,7 @@ def fetch_mls_listings(limit=100):
     }
 
     params = {
-    	"$select": "ListingKey,ListingId,OriginatingSystemName",
-    	"$top": "5"
+    "$top": "1"
 	}
 
     response = requests.get(
