@@ -48,7 +48,6 @@ for listing in listings:
     acres = get_acres(listing)
 
     payload = {
-        "status": "New",
         "dateFound": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mlsId": listing.get("ListingId", ""),
         "parcelId": listing.get("ParcelNumber", ""),
@@ -58,7 +57,12 @@ for listing in listings:
         "acres": acres if acres else "",
         "price": listing.get("ListPrice", ""),
         "mlsLink": "",
-        "gisLink": ""
+        "gisLink": "",
+        "waterType": ", ".join(listing.get("WaterSource", [])) if isinstance(listing.get("WaterSource"), list) else listing.get("WaterSource", ""),
+        "sewerType": ", ".join(listing.get("Sewer", [])) if isinstance(listing.get("Sewer"), list) else listing.get("Sewer", ""),
+        "subjectToHoa": "Yes" if float(listing.get("AssociationFee") or 0) > 0 else "No",
+        "subjectToCcrs": listing.get("CAR_CCRSubjectTo", ""),
+        "cityTaxPaidTo": ""
     }
 
     response = requests.post(SHEET_WEBHOOK_URL, json=payload)

@@ -36,7 +36,11 @@ def fetch_mls_listings(limit=5):
 			"Sewer",
 			"RoadSurfaceType",
 			"PossibleUse",
-            "ModificationTimestamp"
+            "ModificationTimestamp",
+            "WaterSource",
+			"Sewer",
+			"CAR_CCRSubjectTo",
+			"AssociationFee"
         ]),
         "$filter": (
     		f"OriginatingSystemName eq '{originating_system_name}' "
