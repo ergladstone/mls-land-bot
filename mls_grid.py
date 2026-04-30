@@ -30,6 +30,12 @@ def fetch_mls_listings(limit=5):
             "ListPrice",
             "StandardStatus",
             "OriginatingSystemName",
+            "PropertyType",
+			"Latitude",
+			"Longitude",
+			"Sewer",
+			"RoadSurfaceType",
+			"PossibleUse",
             "ModificationTimestamp"
         ]),
         "$filter": (
