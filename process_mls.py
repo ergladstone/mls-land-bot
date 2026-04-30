@@ -46,7 +46,7 @@ for listing in listings:
             acres = round(float(lot_size_sqft) / 43560, 2)
 
     payload = {
-        "status": "Qualified",
+        "status": "New",
         "dateFound": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mlsId": listing.get("ListingId", ""),
         "parcelId": listing.get("ParcelNumber", ""),
