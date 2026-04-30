@@ -11,7 +11,7 @@ with open("criteria.json", "r") as f:
     criteria = json.load(f)
 
 # Fetch ONLY 5 active MLS land listings for now
-listings = fetch_mls_listings(limit=5)
+listings = fetch_mls_listings(limit=50)
 
 results = []
 
