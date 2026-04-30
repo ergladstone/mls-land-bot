@@ -55,28 +55,23 @@ def get_acres(listing):
     return 0
 
 
-def qualifies(listing, criteria):
-    # Status must be Active
+def qualification_result(listing, criteria=None):
     if listing.get("StandardStatus") != "Active":
-        return False
+        return False, "Status is not Active"
 
-    # Property type must be Land
     if listing.get("PropertyType") != "Land":
-        return False
+        return False, "PropertyType is not Land"
 
-    # Max price
     price = listing.get("ListPrice")
     if price in [None, ""]:
-        return False
+        return False, "Missing ListPrice"
 
     if float(price) > 120000:
-        return False
+        return False, "ListPrice over 120000"
 
-    # Must have lat/lng for radius check
     if listing.get("Latitude") in [None, ""] or listing.get("Longitude") in [None, ""]:
-        return False
+        return False, "Missing Latitude or Longitude"
 
-    # 40-mile radius from Concord, NC
     concord_lat = 35.4088
     concord_lng = -80.5795
 
@@ -88,30 +83,32 @@ def qualifies(listing, criteria):
     )
 
     if miles > 40:
-        return False
+        return False, f"Outside 40 miles from Concord ({round(miles, 1)} miles)"
 
-    # Exclude dirt roads
     road_surface = listing.get("RoadSurfaceType")
 
     if value_contains(road_surface, "dirt"):
-        return False
+        return False, "RoadSurfaceType contains dirt"
 
-    # PossibleUse must be blank or residential
     possible_use = listing.get("PossibleUse")
 
     if not value_is_blank(possible_use):
         if not value_contains(possible_use, "residential"):
-            return False
+            return False, "PossibleUse is not blank or residential"
 
-    # Acreage rule based on sewer/septic
     sewer = listing.get("Sewer")
     acres = get_acres(listing)
 
     if value_contains(sewer, "sewer"):
         if acres < 0.1:
-            return False
+            return False, f"Acres below 0.1 for sewer ({round(acres, 2)})"
     else:
         if acres < 0.7:
-            return False
+            return False, f"Acres below 0.7 for septic/unknown sewer ({round(acres, 2)})"
 
-    return True
+    return True, "Qualified"
+
+
+def qualifies(listing, criteria=None):
+    passed, reason = qualification_result(listing, criteria)
+    return passed

@@ -2,7 +2,7 @@ import json
 import os
 import requests
 from datetime import datetime
-from filter import qualifies
+from filter import qualification_result, get_acres
 from mls_grid import fetch_mls_listings
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
@@ -16,11 +16,13 @@ listings = fetch_mls_listings(limit=5)
 results = []
 
 for listing in listings:
-    if not qualifies(listing, criteria):
+    passed, reason = qualification_result(listing, criteria)
+
+    if not passed:
         results.append({
             "listingId": listing.get("ListingId"),
             "sentToSheet": False,
-            "reason": "Did not meet criteria"
+            "reason": reason
         })
         continue
 
@@ -43,20 +45,7 @@ for listing in listings:
         part for part in [street_address, city_state_zip] if part
     )
 
-    acres = listing.get("LotSizeAcres")
-
-    if acres in [None, ""]:
-        lot_size_area = listing.get("LotSizeArea")
-        lot_size_units = str(listing.get("LotSizeUnits", "")).lower()
-
-        if lot_size_area not in [None, ""] and "acre" in lot_size_units:
-            acres = lot_size_area
-
-    if acres in [None, ""]:
-        lot_size_sqft = listing.get("LotSizeSquareFeet")
-
-        if lot_size_sqft not in [None, ""]:
-            acres = round(float(lot_size_sqft) / 43560, 2)
+    acres = get_acres(listing)
 
     payload = {
         "status": "New",
@@ -66,7 +55,7 @@ for listing in listings:
         "address": full_address,
         "county": listing.get("CountyOrParish", ""),
         "municipality": city,
-        "acres": acres if acres not in [None, ""] else "",
+        "acres": acres if acres else "",
         "price": listing.get("ListPrice", ""),
         "mlsLink": "",
         "gisLink": ""
@@ -77,6 +66,7 @@ for listing in listings:
     results.append({
         "listingId": listing.get("ListingId"),
         "sentToSheet": True,
+        "reason": reason,
         "sheetResponse": response.text
     })
 
