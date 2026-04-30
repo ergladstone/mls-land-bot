@@ -1,16 +1,29 @@
+import json
 import os
 import requests
 from datetime import datetime
+from filter import qualifies
 from mls_grid import fetch_mls_listings
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 
-# Fetch ONLY 5 active MLS listings for now
+with open("criteria.json", "r") as f:
+    criteria = json.load(f)
+
+# Fetch ONLY 5 active MLS land listings for now
 listings = fetch_mls_listings(limit=5)
 
 results = []
 
 for listing in listings:
+    if not qualifies(listing, criteria):
+        results.append({
+            "listingId": listing.get("ListingId"),
+            "sentToSheet": False,
+            "reason": "Did not meet criteria"
+        })
+        continue
+
     street_number = listing.get("StreetNumber", "")
     street_name = listing.get("StreetName", "")
     street_suffix = listing.get("StreetSuffix", "")
@@ -55,7 +68,7 @@ for listing in listings:
         "municipality": city,
         "acres": acres if acres not in [None, ""] else "",
         "price": listing.get("ListPrice", ""),
-        "mlsLink": f"https://matrix.canopymls.com/matrix/shared/{listing.get('ListingId', '')}",
+        "mlsLink": "",
         "gisLink": ""
     }
 
