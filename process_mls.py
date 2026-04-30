@@ -10,7 +10,7 @@ SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 with open("criteria.json", "r") as f:
     criteria = json.load(f)
 
-# Fetch ONLY 5 active MLS land listings for now
+# Fetch MLS listings
 listings = fetch_mls_listings(limit=50)
 
 results = []
@@ -25,6 +25,9 @@ for listing in listings:
             "reason": reason
         })
         continue
+
+    # DEBUG: check city tax field
+    print("CITY TAX FIELD:", listing.get("CAR_CityTaxesPaidTo"))
 
     street_number = listing.get("StreetNumber", "")
     street_name = listing.get("StreetName", "")
@@ -62,7 +65,9 @@ for listing in listings:
         "sewerType": ", ".join(listing.get("Sewer", [])) if isinstance(listing.get("Sewer"), list) else listing.get("Sewer", ""),
         "subjectToHoa": "Yes" if float(listing.get("AssociationFee") or 0) > 0 else "No",
         "subjectToCcrs": listing.get("CAR_CCRSubjectTo", ""),
-        "cityTaxPaidTo": listing.get("CAR_CityTaxesPaidTo", "")
+        "cityTaxPaidTo": listing.get("CAR_CityTaxesPaidTo", ""),
+        "agentName": listing.get("ListAgentFullName", ""),
+        "agentEmail": listing.get("ListAgentEmail", "")
     }
 
     response = requests.post(SHEET_WEBHOOK_URL, json=payload)
