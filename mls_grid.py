@@ -40,6 +40,7 @@ def fetch_mls_listings(limit=5):
             "WaterSource",
 			"Sewer",
 			"CAR_CCRSubjectTo",
+			"CAR_CityTaxesPaidTo",
 			"AssociationFee"
         ]),
         "$filter": (

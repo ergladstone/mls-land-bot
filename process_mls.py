@@ -62,7 +62,7 @@ for listing in listings:
         "sewerType": ", ".join(listing.get("Sewer", [])) if isinstance(listing.get("Sewer"), list) else listing.get("Sewer", ""),
         "subjectToHoa": "Yes" if float(listing.get("AssociationFee") or 0) > 0 else "No",
         "subjectToCcrs": listing.get("CAR_CCRSubjectTo", ""),
-        "cityTaxPaidTo": ""
+        "cityTaxPaidTo": listing.get("CAR_CityTaxesPaidTo", "")
     }
 
     response = requests.post(SHEET_WEBHOOK_URL, json=payload)
