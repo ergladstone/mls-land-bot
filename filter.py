@@ -21,35 +21,97 @@ def distance_miles(lat1, lon1, lat2, lon2):
     return radius * c
 
 
+def value_contains(value, search_text):
+    if value is None:
+        return False
+
+    if isinstance(value, list):
+        return any(search_text in str(item).lower() for item in value)
+
+    return search_text in str(value).lower()
+
+
+def value_is_blank(value):
+    return value is None or value == "" or value == []
+
+
+def get_acres(listing):
+    acres = listing.get("LotSizeAcres")
+
+    if acres not in [None, ""]:
+        return float(acres)
+
+    lot_size_area = listing.get("LotSizeArea")
+    lot_size_units = str(listing.get("LotSizeUnits", "")).lower()
+
+    if lot_size_area not in [None, ""] and "acre" in lot_size_units:
+        return float(lot_size_area)
+
+    lot_size_sqft = listing.get("LotSizeSquareFeet")
+
+    if lot_size_sqft not in [None, ""]:
+        return float(lot_size_sqft) / 43560
+
+    return 0
+
+
 def qualifies(listing, criteria):
-    if listing.get("MlsStatus") != criteria["required_status"]:
+    # Status must be Active
+    if listing.get("StandardStatus") != "Active":
         return False
 
-    if float(listing.get("ListPrice", 0)) > criteria["max_price"]:
+    # Property type must be Land
+    if listing.get("PropertyType") != "Land":
         return False
 
-    road_surface = str(listing.get("RoadSurfaceType", "")).lower()
-    if criteria["excluded_road_surface"].lower() in road_surface:
+    # Max price
+    price = listing.get("ListPrice")
+    if price in [None, ""]:
         return False
+
+    if float(price) > 120000:
+        return False
+
+    # Must have lat/lng for radius check
+    if listing.get("Latitude") in [None, ""] or listing.get("Longitude") in [None, ""]:
+        return False
+
+    # 40-mile radius from Concord, NC
+    concord_lat = 35.4088
+    concord_lng = -80.5795
 
     miles = distance_miles(
         listing.get("Latitude"),
         listing.get("Longitude"),
-        criteria["center_latitude"],
-        criteria["center_longitude"]
+        concord_lat,
+        concord_lng
     )
 
-    if miles > criteria["radius_miles"]:
+    if miles > 40:
         return False
 
-    sewer = str(listing.get("Sewer", "")).lower()
-    acres = float(listing.get("LotSizeAcres", 0))
+    # Exclude dirt roads
+    road_surface = listing.get("RoadSurfaceType")
 
-    if "sewer" in sewer:
-        if acres < criteria["minimum_acres_with_sewer"]:
+    if value_contains(road_surface, "dirt"):
+        return False
+
+    # PossibleUse must be blank or residential
+    possible_use = listing.get("PossibleUse")
+
+    if not value_is_blank(possible_use):
+        if not value_contains(possible_use, "residential"):
+            return False
+
+    # Acreage rule based on sewer/septic
+    sewer = listing.get("Sewer")
+    acres = get_acres(listing)
+
+    if value_contains(sewer, "sewer"):
+        if acres < 0.1:
             return False
     else:
-        if acres < criteria["minimum_acres_without_sewer"]:
+        if acres < 0.7:
             return False
 
     return True
