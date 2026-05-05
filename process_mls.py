@@ -56,7 +56,8 @@ def build_payload(listing, action):
         "subjectToCcrs": listing.get("CAR_CCRSubjectTo", ""),
         "cityTaxPaidTo": listing.get("CAR_CityTaxesPaidTo", ""),
         "agentName": listing.get("ListAgentFullName", ""),
-        "agentEmail": listing.get("ListAgentEmail", "")
+        "agentEmail": listing.get("ListAgentEmail", ""),
+        "dateListed": listing.get("ListingContractDate", "").split("T")[0] if listing.get("ListingContractDate") else ""
     }
 
 

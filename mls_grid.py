@@ -42,6 +42,7 @@ def fetch_mls_listings(limit=50):
             "AssociationFee",
             "ListAgentFullName",
             "ListAgentEmail",
+            "ListingContractDate",
             "ModificationTimestamp"
         ]),
         "$filter": (
