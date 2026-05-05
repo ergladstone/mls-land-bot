@@ -61,7 +61,9 @@ def build_payload(listing, action):
     }
 
 
-listings = fetch_mls_listings(limit=50)
+from mls_grid import fetch_all_active_land_listings
+
+listings = fetch_all_active_land_listings()
 
 results = []
 
