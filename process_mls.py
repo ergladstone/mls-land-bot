@@ -10,34 +10,14 @@ SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 with open("criteria.json", "r") as f:
     criteria = json.load(f)
 
-# Fetch MLS listings
-listings = fetch_mls_listings(limit=50)
 
-results = []
+def format_list(value):
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value)
+    return value or ""
 
-for listing in listings:
-    passed, reason = qualification_result(listing, criteria)
 
-    if not passed:
-    	delete_payload = {
-        	"action": "delete",
-        	"mlsId": listing.get("ListingId", "")
-    	}
-
-    	response = requests.post(SHEET_WEBHOOK_URL, json=delete_payload)
-
-    	results.append({
-        	"listingId": listing.get("ListingId"),
-        	"sentToSheet": False,
-        	"deletedFromSheet": True,
-        	"reason": reason,
-        	"sheetResponse": response.text
-    	})
-    	continue
-
-    # DEBUG: check city tax field
-    print("CITY TAX FIELD:", listing.get("CAR_CityTaxesPaidTo"))
-
+def build_payload(listing, action):
     street_number = listing.get("StreetNumber", "")
     street_name = listing.get("StreetName", "")
     street_suffix = listing.get("StreetSuffix", "")
@@ -59,19 +39,19 @@ for listing in listings:
 
     acres = get_acres(listing)
 
-    payload = {
+    return {
+        "action": action,
         "dateFound": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "mlsId": listing.get("ListingId", ""),
         "parcelId": listing.get("ParcelNumber", ""),
         "address": full_address,
         "county": listing.get("CountyOrParish", ""),
-        "municipality": city,
         "acres": acres if acres else "",
         "price": listing.get("ListPrice", ""),
         "mlsLink": "",
         "gisLink": "",
-        "waterType": ", ".join(listing.get("WaterSource", [])) if isinstance(listing.get("WaterSource"), list) else listing.get("WaterSource", ""),
-        "sewerType": ", ".join(listing.get("Sewer", [])) if isinstance(listing.get("Sewer"), list) else listing.get("Sewer", ""),
+        "waterType": format_list(listing.get("WaterSource")),
+        "sewerType": format_list(listing.get("Sewer")),
         "subjectToHoa": "Yes" if float(listing.get("AssociationFee") or 0) > 0 else "No",
         "subjectToCcrs": listing.get("CAR_CCRSubjectTo", ""),
         "cityTaxPaidTo": listing.get("CAR_CityTaxesPaidTo", ""),
@@ -79,11 +59,44 @@ for listing in listings:
         "agentEmail": listing.get("ListAgentEmail", "")
     }
 
+
+listings = fetch_mls_listings(limit=50)
+
+results = []
+
+for listing in listings:
+    listing_id = listing.get("ListingId", "")
+    status = listing.get("StandardStatus", "")
+
+    if status != "Active":
+        payload = {
+            "action": "delete",
+            "mlsId": listing_id
+        }
+
+        response = requests.post(SHEET_WEBHOOK_URL, json=payload)
+
+        results.append({
+            "listingId": listing_id,
+            "action": "delete",
+            "reason": f"Status is {status}",
+            "sheetResponse": response.text
+        })
+
+        continue
+
+    passed, reason = qualification_result(listing, criteria)
+
+    if passed:
+        payload = build_payload(listing, "upsert")
+    else:
+        payload = build_payload(listing, "update_if_exists")
+
     response = requests.post(SHEET_WEBHOOK_URL, json=payload)
 
     results.append({
-        "listingId": listing.get("ListingId"),
-        "sentToSheet": True,
+        "listingId": listing_id,
+        "action": payload["action"],
         "reason": reason,
         "sheetResponse": response.text
     })
