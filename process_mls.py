@@ -3,7 +3,7 @@ import os
 import requests
 from datetime import datetime
 from filter import qualification_result, get_acres
-from mls_grid import fetch_mls_listings
+from mls_grid import fetch_all_active_land_listings
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 
