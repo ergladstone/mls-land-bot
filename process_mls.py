@@ -19,12 +19,21 @@ for listing in listings:
     passed, reason = qualification_result(listing, criteria)
 
     if not passed:
-        results.append({
-            "listingId": listing.get("ListingId"),
-            "sentToSheet": False,
-            "reason": reason
-        })
-        continue
+    	delete_payload = {
+        	"action": "delete",
+        	"mlsId": listing.get("ListingId", "")
+    	}
+
+    	response = requests.post(SHEET_WEBHOOK_URL, json=delete_payload)
+
+    	results.append({
+        	"listingId": listing.get("ListingId"),
+        	"sentToSheet": False,
+        	"deletedFromSheet": True,
+        	"reason": reason,
+        	"sheetResponse": response.text
+    	})
+    	continue
 
     # DEBUG: check city tax field
     print("CITY TAX FIELD:", listing.get("CAR_CityTaxesPaidTo"))
