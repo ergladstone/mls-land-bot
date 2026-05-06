@@ -1,9 +1,9 @@
 import json
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from filter import qualification_result, get_acres
-from mls_grid import fetch_all_active_land_listings
+from mls_grid import fetch_modified_land_listings_since
 
 SHEET_WEBHOOK_URL = os.environ["SHEET_WEBHOOK_URL"]
 
@@ -15,6 +15,29 @@ def format_list(value):
     if isinstance(value, list):
         return ", ".join(str(item) for item in value)
     return value or ""
+
+
+def get_last_run():
+    response = requests.post(SHEET_WEBHOOK_URL, json={
+        "action": "get_last_run"
+    })
+
+    value = response.text.strip()
+
+    if value:
+        return value
+
+    # Fallback if Settings tab is blank
+    return "1970-01-01T00:00:00Z"
+
+
+def set_last_run(timestamp):
+    response = requests.post(SHEET_WEBHOOK_URL, json={
+        "action": "set_last_run",
+        "lastRun": timestamp
+    })
+
+    return response.text
 
 
 def build_payload(listing, action):
@@ -61,9 +84,13 @@ def build_payload(listing, action):
     }
 
 
-from mls_grid import fetch_all_active_land_listings
+last_run = get_last_run()
+new_last_run = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
-listings = fetch_all_active_land_listings()
+print(f"Last MLS Run: {last_run}")
+print(f"New Last MLS Run will be: {new_last_run}")
+
+listings = fetch_modified_land_listings_since(last_run)
 
 results = []
 
@@ -104,4 +131,8 @@ for listing in listings:
         "sheetResponse": response.text
     })
 
+set_response = set_last_run(new_last_run)
+
 print(results)
+print(f"Last run update response: {set_response}")
+print("PROCESS COMPLETE")
