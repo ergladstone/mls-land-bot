@@ -19,8 +19,8 @@ def format_list(value):
 
 def get_last_run():
     response = requests.post(SHEET_WEBHOOK_URL, json={
-        "action": "get_last_run"
-    })
+    	"action": "get_last_run"
+	}, timeout=20)
 
     value = response.text.strip()
 
@@ -33,9 +33,9 @@ def get_last_run():
 
 def set_last_run(timestamp):
     response = requests.post(SHEET_WEBHOOK_URL, json={
-        "action": "set_last_run",
-        "lastRun": timestamp
-    })
+    	"action": "set_last_run",
+    	"lastRun": timestamp
+	}, timeout=20)
 
     return response.text
 
@@ -104,7 +104,7 @@ for listing in listings:
             "mlsId": listing_id
         }
 
-        response = requests.post(SHEET_WEBHOOK_URL, json=payload)
+        response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
 
         results.append({
             "listingId": listing_id,
@@ -122,7 +122,7 @@ for listing in listings:
     else:
         payload = build_payload(listing, "update_if_exists")
 
-    response = requests.post(SHEET_WEBHOOK_URL, json=payload)
+    response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
 
     results.append({
         "listingId": listing_id,
