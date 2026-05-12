@@ -3,7 +3,7 @@ print("PROCESS_MLS SCRIPT STARTED", flush=True)
 import json
 import os
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from filter import qualification_result, get_acres
 from mls_grid import fetch_modified_land_listings_since
@@ -100,7 +100,11 @@ def build_payload(listing, action):
 
 
 last_run = get_last_run()
-new_last_run = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+# Use a 10-minute safety buffer so MLS Grid delays do not cause skipped listings.
+new_last_run = (
+    datetime.now(timezone.utc) - timedelta(minutes=10)
+).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 print(f"Last MLS Run: {last_run}", flush=True)
 print(f"New Last MLS Run will be: {new_last_run}", flush=True)
