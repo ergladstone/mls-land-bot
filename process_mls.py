@@ -88,16 +88,18 @@ def build_payload(listing, action):
 last_run = get_last_run()
 new_last_run = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
-print(f"Last MLS Run: {last_run}")
-print(f"New Last MLS Run will be: {new_last_run}")
+print(f"Last MLS Run: {last_run}", flush=True)
+print(f"New Last MLS Run will be: {new_last_run}", flush=True)
 
 listings = fetch_modified_land_listings_since(last_run)
 
 results = []
+processed_count = 0
 
 for listing in listings:
     listing_id = listing.get("ListingId", "")
     status = listing.get("StandardStatus", "")
+    listing_modified = listing.get("ModificationTimestamp")
 
     if status != "Active":
         payload = {
@@ -114,26 +116,36 @@ for listing in listings:
             "sheetResponse": response.text
         })
 
-        continue
-
-    passed, reason = qualification_result(listing, criteria)
-
-    if passed:
-        payload = build_payload(listing, "upsert")
     else:
-        payload = build_payload(listing, "update_if_exists")
+        passed, reason = qualification_result(listing, criteria)
 
-    response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
+        if passed:
+            payload = build_payload(listing, "upsert")
+        else:
+            payload = build_payload(listing, "update_if_exists")
 
-    results.append({
-        "listingId": listing_id,
-        "action": payload["action"],
-        "reason": reason,
-        "sheetResponse": response.text
-    })
+        response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
 
+        results.append({
+            "listingId": listing_id,
+            "action": payload["action"],
+            "reason": reason,
+            "sheetResponse": response.text
+        })
+
+    processed_count += 1
+
+    # Advance Last MLS Run as we successfully process records.
+    # This makes the job resumable if Railway stops it mid-run.
+    if listing_modified:
+        set_last_run(listing_modified)
+
+    if processed_count % 25 == 0:
+        print(f"Processed {processed_count} / {len(listings)}", flush=True)
+
+# Once the full batch finishes, advance to the run start time.
 set_response = set_last_run(new_last_run)
 
-print(results, flush=True)
+print(f"Processed total: {processed_count}", flush=True)
 print(f"Last run update response: {set_response}", flush=True)
 print("PROCESS COMPLETE", flush=True)
