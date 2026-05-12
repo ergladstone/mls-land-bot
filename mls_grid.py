@@ -111,6 +111,8 @@ def fetch_paginated_listings(filter_text, label="MLS"):
         response = make_mls_request(params, headers, label)
         data = response.json()
         batch = data.get("value", [])
+        
+        print(f"{label}: MLS Grid returned {len(batch)} listings", flush=True)
 
         if not batch:
             break
