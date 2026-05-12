@@ -1,8 +1,10 @@
 print("PROCESS_MLS SCRIPT STARTED", flush=True)
+
 import json
 import os
 import requests
 from datetime import datetime, timezone
+
 from filter import qualification_result, get_acres
 from mls_grid import fetch_modified_land_listings_since
 
@@ -12,6 +14,21 @@ with open("criteria.json", "r") as f:
     criteria = json.load(f)
 
 
+def post_to_sheet(payload, timeout=60):
+    try:
+        response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=timeout)
+        response.raise_for_status()
+        return response.text
+
+    except requests.exceptions.Timeout:
+        print(f"WARNING: Sheet webhook timed out for action: {payload.get('action')}", flush=True)
+        return "TIMEOUT"
+
+    except requests.exceptions.RequestException as e:
+        print(f"WARNING: Sheet webhook failed for action {payload.get('action')}: {e}", flush=True)
+        return f"ERROR: {e}"
+
+
 def format_list(value):
     if isinstance(value, list):
         return ", ".join(str(item) for item in value)
@@ -19,26 +36,23 @@ def format_list(value):
 
 
 def get_last_run():
-    response = requests.post(SHEET_WEBHOOK_URL, json={
-    	"action": "get_last_run"
-	}, timeout=20)
+    response_text = post_to_sheet({
+        "action": "get_last_run"
+    }, timeout=60)
 
-    value = response.text.strip()
+    value = response_text.strip()
 
-    if value:
+    if value and not value.startswith("ERROR") and value != "TIMEOUT":
         return value
 
-    # Fallback if Settings tab is blank
     return "1970-01-01T00:00:00Z"
 
 
 def set_last_run(timestamp):
-    response = requests.post(SHEET_WEBHOOK_URL, json={
-    	"action": "set_last_run",
-    	"lastRun": timestamp
-	}, timeout=20)
-
-    return response.text
+    return post_to_sheet({
+        "action": "set_last_run",
+        "lastRun": timestamp
+    }, timeout=60)
 
 
 def build_payload(listing, action):
@@ -99,7 +113,6 @@ processed_count = 0
 for listing in listings:
     listing_id = listing.get("ListingId", "")
     status = listing.get("StandardStatus", "")
-    listing_modified = listing.get("ModificationTimestamp")
 
     if status != "Active":
         payload = {
@@ -107,13 +120,13 @@ for listing in listings:
             "mlsId": listing_id
         }
 
-        response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
+        sheet_response = post_to_sheet(payload, timeout=60)
 
         results.append({
             "listingId": listing_id,
             "action": "delete",
             "reason": f"Status is {status}",
-            "sheetResponse": response.text
+            "sheetResponse": sheet_response
         })
 
     else:
@@ -124,26 +137,20 @@ for listing in listings:
         else:
             payload = build_payload(listing, "update_if_exists")
 
-        response = requests.post(SHEET_WEBHOOK_URL, json=payload, timeout=20)
+        sheet_response = post_to_sheet(payload, timeout=60)
 
         results.append({
             "listingId": listing_id,
             "action": payload["action"],
             "reason": reason,
-            "sheetResponse": response.text
+            "sheetResponse": sheet_response
         })
 
     processed_count += 1
 
-    # Advance Last MLS Run as we successfully process records.
-    # This makes the job resumable if Railway stops it mid-run.
-    if listing_modified:
-        set_last_run(listing_modified)
-
     if processed_count % 25 == 0:
         print(f"Processed {processed_count} / {len(listings)}", flush=True)
 
-# Once the full batch finishes, advance to the run start time.
 set_response = set_last_run(new_last_run)
 
 print(f"Processed total: {processed_count}", flush=True)
