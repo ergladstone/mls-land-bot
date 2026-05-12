@@ -1,3 +1,4 @@
+print("PROCESS_MLS SCRIPT STARTED", flush=True)
 import json
 import os
 import requests
@@ -133,6 +134,6 @@ for listing in listings:
 
 set_response = set_last_run(new_last_run)
 
-print(results)
-print(f"Last run update response: {set_response}")
-print("PROCESS COMPLETE")
+print(results, flush=True)
+print(f"Last run update response: {set_response}", flush=True)
+print("PROCESS COMPLETE", flush=True)
