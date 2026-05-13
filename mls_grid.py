@@ -67,10 +67,7 @@ def make_mls_request(params, headers, label):
             return response
 
         except requests.exceptions.Timeout:
-            print(
-                f"{label}: MLS Grid timeout. Attempt {attempt}/{max_attempts}",
-                flush=True
-            )
+            print(f"{label}: MLS Grid timeout. Attempt {attempt}/{max_attempts}", flush=True)
 
             if attempt == max_attempts:
                 raise
@@ -78,10 +75,7 @@ def make_mls_request(params, headers, label):
             time.sleep(3)
 
         except requests.exceptions.RequestException as e:
-            print(
-                f"{label}: MLS Grid request failed. Attempt {attempt}/{max_attempts}: {e}",
-                flush=True
-            )
+            print(f"{label}: MLS Grid request failed. Attempt {attempt}/{max_attempts}: {e}", flush=True)
 
             if attempt == max_attempts:
                 raise
@@ -89,59 +83,60 @@ def make_mls_request(params, headers, label):
             time.sleep(3)
 
 
-def fetch_paginated_listings(filter_text, label="MLS"):
+def fetch_paginated_listings(filter_text, label="MLS", max_records=None):
     headers = get_headers()
 
     all_listings = []
-    seen_listing_ids = set()
     skip = 0
-    batch_size = 100
+    batch_size = 200
 
     while True:
+        current_top = batch_size
+
+        if max_records is not None:
+            remaining = max_records - len(all_listings)
+
+            if remaining <= 0:
+                break
+
+            current_top = min(batch_size, remaining)
+
         print(f"{label}: requesting skip={skip}", flush=True)
+        print(f"{label}: filter={filter_text}", flush=True)
 
         params = {
             "$select": SELECT_FIELDS,
             "$filter": filter_text,
-            "$orderby": "ModificationTimestamp desc",
-            "$top": str(batch_size),
+            "$orderby": "ModificationTimestamp asc",
+            "$top": str(current_top),
             "$skip": str(skip),
         }
 
         response = make_mls_request(params, headers, label)
+
         data = response.json()
         batch = data.get("value", [])
-        
+
         print(f"{label}: MLS Grid returned {len(batch)} listings", flush=True)
 
         if not batch:
             break
 
-        new_batch = []
-
-        for listing in batch:
-            listing_id = listing.get("ListingId")
-
-            if listing_id and listing_id not in seen_listing_ids:
-                seen_listing_ids.add(listing_id)
-                new_batch.append(listing)
-
-        if not new_batch:
-            print(f"{label}: no new unique listings in this batch. Stopping.", flush=True)
-            break
-
-        all_listings.extend(new_batch)
+        all_listings.extend(batch)
 
         print(
-            f"{label}: fetched {len(new_batch)} new listings "
+            f"{label}: fetched {len(batch)} listings "
             f"(total: {len(all_listings)})",
             flush=True
         )
 
-        if len(batch) < batch_size:
+        if len(batch) < current_top:
             break
 
-        skip += batch_size
+        if max_records is not None and len(all_listings) >= max_records:
+            break
+
+        skip += current_top
 
     return all_listings
 
@@ -164,7 +159,11 @@ def fetch_modified_land_listings_since(last_run):
     filter_text = (
         f"OriginatingSystemName eq '{originating_system_name}' "
         f"and PropertyType eq 'Land' "
-        f"and ModificationTimestamp gt '{last_run}'"
+        f"and ModificationTimestamp gt {last_run}"
     )
 
-    return fetch_paginated_listings(filter_text, label="Incremental scan")
+    return fetch_paginated_listings(
+        filter_text,
+        label="Incremental scan",
+        max_records=100
+    )
